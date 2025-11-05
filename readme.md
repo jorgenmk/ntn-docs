@@ -34,7 +34,6 @@ Engineers familiar with embedded systems, RTOS, LTE/NTN protocols, Linux environ
 | Amarisoft Callbox             | Classic / Mini     |
 | 2-way RF combiner 800-2500MHz | Single cell setup  |
 | SMA cables                    |                    |
-| Murata connector tail         |                    |
 | Development PC                | Win/Linux/Mac      |
 
 The main difference between the Amarisoft callbox variants is the number of cells supported, determined by the physical number of SDR radios built in.
@@ -152,8 +151,9 @@ Consult the User Guide for your callbox for details on connection setup. Note th
 | Software Required      | Link
 |------------------------|-------------------
 | nrfutil                | https://www.nordicsemi.com/Products/Development-tools/nRF-Util/Download?lang=en#infotabs
-| Modem Firmware NTN     | https://linky
-| Modem Shell Application| https://linky
+| Modem Firmware NTN     | Awaiting public release
+| Modem Shell            | Awaiting public release
+| Serial Modem           | [nrf9151dk_mfw-2.0.2_sdk-3.1.0.zip](https://nsscprodmedia.blob.core.windows.net/prod/software-and-other-downloads/dev-kits/nrf9151-dk/application-firmware/nrf9151dk_mfw-2.0.2_sdk-3.1.0.zip) (latest release at time of writing)
 
 Download all the software from the table to the development PC.
 
@@ -190,15 +190,13 @@ Load the NTN enabled modem firmware onto the nRF9151 DK:
 
     nrfutil device program --firmware path/to/mfw_nrf91x1_ntn-0.5.0.zip
 
+# Applications
 
 ## Modem Shell Application
 
 Load the NTN enabled modem shell application:
 
     nrfutil device program --firmware nrf9151_mosh_ntn_0.1.hex
-
-
-# First run
 
 On the development PC use your favorite terminal emulator and connect to your nRF9151 DK:
 
@@ -299,14 +297,52 @@ If the IP used above is a typical UDP echo service, output similar to below shou
     Received data for socket socket_id=0, buffer_size=15:
             somebytesofdata
 
+# Serial Modem
+
+Unzip the firmware package downloaded from the nRF9151DK product page.
+
+    unzip nrf9151dk_mfw-2.0.2_sdk-3.1.0.zip
+
+Load the serial modem application from the extracted package:
+
+    nrfutil device program --firmware img_app_bl/nrf9151dk_serial_lte_modem_2025-08-14_6c6e5b32.hex
+
+On the development PC use your favorite terminal emulator and connect to your nRF9151 DK:
+
+    minicom /dev/ttyACM0
+
+Upon reset of the nRF9151DK the application should print the string `Ready` to the serial terminal.
+
+Currently the serial modem needs a full CRLF at the end of commands to properly start processing. Check your terminals settings to make sure it works. Typing in the string `AT\r\n` should return the string `OK`.
+
+Note that this application does not echo characters back, like modem_shell did above.
+
+After running the following AT commands, the device should be connected to the callbox:
+
+    AT+CFUN=0
+    AT%CELLULARPRFL=2,0,4,0
+    AT%CELLULARPRFL=2,1,1,0
+    AT%XSYSTEMMODE=0,0,0,0,1
+    AT%LOCATION=2,"63.421","10.437","160",0,0
+    AT%XBANDLOCK=2,,"256"
+    AT+CPSMS=0
+    AT+CFUN=1
+
+Now you should be able to run the AT command `AT+CGDCONT?` and get output indicating we are connected aand have IP address from callbox:
+
+    +CGDCONT: 0,"IP","test123","192.168.3.2",0,0
+    OK
+
+Now SLM AT commands should work, running `AT#XGETADDRINFO="www.google.com"` shoud return something like:
+
+    OK
+    #XGETADDRINFO: "216.58.207.228"
+
 # Summary
 
-We now have a working emulated NTN connection between the nRF9151DK and the callbox. 
+We now have a working NTN connection between the nRF9151DK and the callbox.
 
-Using the same modem_shell application and a cellular NTN operator SIM card, the same procedure should work connecting to a real satellite.
+Using the modem_shell or serial_modem application and a cellular NTN operator SIM card, the same procedure should work connecting to a real satellite.
 
 The callbox has a web GUI page that displays logs and device connection information at its IP address: `http://<callbox ip>/`.
 
-# Missing:
-- Public link to ntn mfw
-- Public link to mosh ntn build
