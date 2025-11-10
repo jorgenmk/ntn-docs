@@ -106,6 +106,23 @@ Now uncomment the line containing "eci_reference" so it becomes like below, but 
     eci_reference: "ecef_greenwich",
     ground_position: {
 
+Next enable "use_state_vectors", find the lines below:
+
+        default_ephemeris: "geo",
+        /* Send orbital data in the form of ECEF state vectors, only relevant in GEO */
+        /* use_state_vectors: true, */
+    #elif NTN_MODE == 1
+        ul_sync_validity: 20,
+
+Uncomment as follows:
+
+        default_ephemeris: "geo",
+        /* Send orbital data in the form of ECEF state vectors, only relevant in GEO */
+        use_state_vectors: true,
+    #elif NTN_MODE == 1
+        ul_sync_validity: 20,
+
+
 Also make note of the following section of this config file:
 
     /* This should reflect the actual UE position in order to simulate properly the service link delay */
