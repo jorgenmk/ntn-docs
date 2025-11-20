@@ -1,73 +1,92 @@
-# Getting Started with nRF9151 in LTE NTN Mode: Integrating with Amarisoft Callbox for Satellite IoT Connectivity
+# Getting Started with nRF9151 in LTE NTN Mode: Integrating with the Amarisoft Callbox for Satellite IoT Connectivity
 
-NTN (Non Terrestrial Network) was introduced in 3GPP Release 17, integrating satellites into cellular networks, allowing global coverage for low power devices. Multiple vendors are already serving this market.
+NTN (Non‑Terrestrial Networks) was introduced in 3GPP Release 17 to integrate satellites into cellular networks, enabling global coverage for low‑power devices. Several vendors are already providing commercial NTN services.
 
-Introducing the nRF9151 SIP, Nordic Semiconductor's SiP with LTE-M/NB-IoT and NTN support, featuring low-power design, integrated GPS, and satellite modem.
+Nordic Semiconductor’s nRF9151 SiP is a low‑power cellular IoT device with LTE‑M/NB‑IoT and NTN support, integrated GNSS, and an NTN‑capable modem.
 
-Amarisoft Callbox: A versatile SDR-based network emulator for simulating cellular including NTN environments, supporting bands like S-band/L-band for satellite testing.
+The Amarisoft Callbox is a versatile SDR‑based network emulator for simulating cellular networks, including NTN environments. It supports satellite‑relevant bands such as S‑band and L‑band for laboratory testing.
 
 ## Purpose
 
-The purpose of this document is to provide step-by-step instructions to bootstrap a nRF9151 based development kit connected to an Amarisoft callbox, focusing on practical setup rather than deep theory.
+The purpose of this document is to provide step‑by‑step instructions for bringing up an nRF9151‑based development kit with an Amarisoft Callbox in LTE NTN mode. The focus is on practical setup and testing rather than detailed theory.
 
-Development and testing of NTN based applications can be slow, time-consuming and expensive when utilizing live satellite networks. Utilizing emulated systems can significantly aid the development effort.
+Development and testing of NTN‑based applications can be slow, time‑consuming, and expensive when using live satellite networks. Emulated systems such as the Amarisoft Callbox can significantly accelerate and de‑risk the development process.
 
 ## Scope
 
-This guide will cover basic connectivity (S-band NTN mode); it will not include advanced features like multi-constellation handover or production deployment. The nRF9151 DK will connect to the Amarisoft callbox in geostationary mode. LEO (low earth orbit) modes are also possible but are not covered in this guide.
+This guide covers basic NTN connectivity in S‑band. It does not cover advanced features such as multi‑constellation handover, roaming between terrestrial and non‑terrestrial networks, or production deployment.
+
+In this document, the nRF9151 DK connects to the Amarisoft Callbox in a geostationary (GEO) satellite configuration. Low Earth Orbit (LEO) modes are also supported by the Callbox, but are not covered here.
 
 ## Target Outcome
 
-Users will be able to establish a cellular link between nRF9151 and Amarisoft callbox, and get bidirectional data transfer working.
+By the end of this guide, you will be able to:
+
+- Establish an NTN cellular link between the nRF9151 DK and the Amarisoft Callbox
+- Verify bidirectional IP data transfer over this link (DNS resolution and UDP traffic)
 
 ## Audience
 
-Engineers familiar with embedded systems, RTOS, LTE/NTN protocols, Linux environments.
+This document targets engineers familiar with:
+
+- Embedded systems and RTOS‑based development
+- LTE/LTE‑M/NB‑IoT and basic NTN concepts
+- Linux command‑line environments
 
 # System Requirements
 
 ## Hardware Requirements
 
-| Hardware Component            | Version            |
-|-------------------------------|--------------------|
-| NTN capable nRF9151dk         | v1.2.0 ++          |
-| Amarisoft Callbox             | Classic / Mini     |
-| 2-way RF combiner 800-2500MHz | Single cell setup  |
-| SMA cables                    |                    |
-| Development PC                | Win/Linux/Mac      |
+| Hardware Component                      | Version            |
+|-----------------------------------------|--------------------|
+| NTN capable nRF9151 DK (SMA variant)    | v1.2.0 ++          |
+| Amarisoft Callbox                       | Classic / Mini     |
+| 2-way RF combiner (800-2500MHz)         | Single cell setup  |
+| SMA cables                              |                    |
+| Development PC                          | Win/Linux/Mac      |
 
-The main difference between the Amarisoft callbox variants is the number of cells supported, determined by the physical number of SDR radios built in.
+The main difference between Amarisoft Callbox variants is the number of simultaneously supported cells, which is determined by the number of SDR radios built into the unit.
 
-For testing NTN applications it can be useful to get a minimum 3-cell variant, (currently named "Amarisoft Classic") as your application most likely will be connecting to both NTN and TN (terrestrial) networks, perhaps both Cat-M1 and NB-IoT standards, and potentially different combinations of LEO/GEO satellites.
+For NTN testing, a 3‑cell Callbox variant (currently sold as the ‘Amarisoft Classic’) is often useful. Many applications will need to:
+
+- Connect to both NTN and terrestrial (TN) networks
+- Test both LTE‑M (Cat‑M1) and NB‑IoT
+- Evaluate different combinations of LEO and GEO satellite scenarios
 
 ## Safety and Regulatory Notes
 
-RF exposure warnings: Ensure lab environment compliance (FCC/IC limits). Only operate using coaxial connections or enclosed in RF chamber. Running with antennas in open could interfere with local cellular networks.
+RF exposure and regulatory warnings:
+
+- Ensure your lab environment complies with applicable RF exposure regulations (for example, FCC/IC limits).
+- For this setup, use coaxial RF connections or operate the hardware inside an RF shielded enclosure.
+- Do not run the Callbox with antennas in open air; this may interfere with local commercial cellular networks.
 
 # Hardware Setup
 
 ## Unbox and Connect
 
-- 2 x SMA cable from callbox to RF combiner
-- SMA cable + Murata tail from RF combiner to nRF9151DK LTE external antenna connector
-- Power and ethernet to Amarisoft callbox
+- 2 × SMA cables from the Callbox RF ports to the RF combiner
+- 1 x SMA cable from the RF combiner to nRF9151DK LTE external antenna connector
+- Power and ethernet to Amarisoft Callbox
 - USB from nrf9151dk to development PC
-- Callbox is delivered with test SIM cards. Insert one into slot on nRF9151 DK
+- The Callbox is delivered with test SIM cards. Insert one test SIM into the SIM slot on the nRF9151 DK.
 
 ## Power Up
 
-- Power on Amarisoft callbox
-- Connect the nRF9151 development kit to the PC
+- Power on Amarisoft Callbox
+- Connect the nRF9151 DK to the development PC via USB
 
 # Configuring Amarisoft Callbox
 
 ## SSH
 
-It is recommended to work on the Amarisoft callbox via SSH from the development PC.
-
+It is recommended to work on the Amarisoft Callbox via SSH from the development PC. To keep things simple we log in as root and perform all operations as root.
+ 
 ## Install Software Update
 
 First download the latest software from the Amarisoft customer portal (https://extranet.amarisoft.com), then copy the tarball to the callbox and extract.
+
+At time of writing `amarisoft.2025-09-19.tar.gz` was the latest release, and it was used to write this guide. Future releases might work differently.
 
 Example: 
 ```
@@ -77,11 +96,13 @@ tar xf /tmp/amarisoft.2025-09-19.tar.gz
 ```
 This creates a 2025-09-19 folder. `cd 2025-09-19` and run `./install.sh`.
 
-For now you can answer yes to all questions. After installation reboot may be requested, which should be performed to load updated firmware into the SDR radio.
+For a default lab setup, you can answer ‘yes’ to all prompts. After installation, a reboot may be requested; perform the reboot so the updated SDR firmware is loaded.
 
-### ENodeB Configuration
+### eNodeB Configuration
 
 The configuration file we are interested in is located here: `/root/enb/config/enb.cfg`
+
+This file controls the LTE/NTN cell configuration used by the Callbox eNodeB process.
 
 This is a symbolic link to one of the files in `/root/enb/config/`. These files have descriptive names, like enb-nbiot-catm1.cfg representing a configuration with one Cat-M1 cell and one nb-iot cell.
 
@@ -89,10 +110,10 @@ The file we want to use is this one: `enb-nbiot-ntn.cfg`
 
 To activate it, make the symbolic link `enb.cfg` point to `enb-nbiot-ntn.cfg`:
 
-    rm -f enb.cfg
-    ln -s enb-nbiot-ntn.cfg enb.cfg
+    # rm -f enb.cfg
+    # ln -s enb-nbiot-ntn.cfg enb.cfg
 
-To make this work with nRF91 we need to make some small modifications to this file, so make a backup of `enb-nbiot-ntn.cfg` first.
+To make this work with nRF9151 DK we need to make some small modifications to this file, so make a backup of `enb-nbiot-ntn.cfg` first.
 
 Edit the file and locate the lines below:
 
@@ -100,7 +121,7 @@ Edit the file and locate the lines below:
     /* eci_reference: "ecef_greenwich" */
     ground_position: {
 
-Now uncomment the line containing "eci_reference" so it becomes like below, but do note the added comma:
+Now uncomment the line containing "eci_reference" so it becomes like below. Note the trailing comma at the end of the eci_reference line; this is required for proper JSON‑style syntax:
 
     /* Uncomment based on UE interpretation of the ECI reference frame */
     eci_reference: "ecef_greenwich",
@@ -134,11 +155,13 @@ Also make note of the following section of this config file:
     ue_doppler_shift: true,
 
 
-This is the expected location of the nRF9151 DK, the latitude, longitude and altitude values will need to be entered into the nRF9151 DK modem firmware so it will correctly determine some delay parameters.
+This is the expected location of the nRF9151 DK. The latitude, longitude, and altitude values must be configured both in this file and in the nRF9151 modem firmware (via AT%LOCATION) so the modem and Callbox agree on delay and Doppler parameters.
 
 ### RF Driver Config
 
-As coaxial connection is used in our setup, some changes need to be made to `/root/enb/config/rf_driver/config.cfg`:
+As we use a direct coaxial connection (no significant path loss), we must reduce the RF gains to avoid receiver saturation.
+
+Make the following modifications to `/root/enb/config/rf_driver/config.cfg`:
 
     tx_gain: 90.0, /* TX gain (in dB) */
     rx_gain: 60.0, /* RX gain (in dB) */
@@ -172,11 +195,13 @@ Consult the User Guide for your callbox for details on connection setup. Note th
 | Modem Shell            | Awaiting public release
 | Serial Modem           | [nrf9151dk_mfw-2.0.2_sdk-3.1.0.zip](https://nsscprodmedia.blob.core.windows.net/prod/software-and-other-downloads/dev-kits/nrf9151-dk/application-firmware/nrf9151dk_mfw-2.0.2_sdk-3.1.0.zip) (latest release at time of writing)
 
+Note: The filenames and versions used in this document are examples. Refer to Nordic’s download pages for the latest NTN modem firmware and modem shell images compatible with your nRF9151 DK revision.
+
 Download all the software from the table to the development PC.
 
 ## nrfutil
 
-nrfutil is a single binary you can run from anywhere, putting it somewhere in your `$PATH` is assumed in the following steps. 
+`nrfutil` is a single binary you can run from anywhere. The examples assume `nrfutil` is available in your PATH. 
 
 Run the following commands to download the *device* command we will use to load firmware onto the nRF91DK:
 
@@ -203,9 +228,11 @@ If you see output similar to above your device is operating correctly.
 
 From here on, commands assume only one DK connected. If more than one is connected, specify device with `--serial-number` parameter.
 
-Load the NTN enabled modem firmware onto the nRF9151 DK:
+Load the NTN-enabled modem firmware onto the nRF9151 DK:
 
     nrfutil device program --firmware path/to/mfw_nrf91x1_ntn-0.5.0.zip
+
+Note: Replace the firmware path and version with the actual NTN modem firmware file provided by Nordic.
 
 # Applications
 
@@ -218,6 +245,10 @@ Load the NTN enabled modem shell application:
 On the development PC use your favorite terminal emulator and connect to your nRF9151 DK:
 
     minicom /dev/ttyACM0
+
+Make sure your terminal is configured with the following settings:
+- Baud rate: 115200
+- 8 data bits, no parity, 1 stop bit (8N1)
 
 Note that development kits usually have multiple ports, but normally the first one is used for application logs.
 
@@ -244,13 +275,13 @@ Press the reset button and you should see output similar to below:
 
 This application has a terminal interface. To enable NTN connectivity we need to type the following commands into the terminal:
 
-    link funmode -0
-    at AT%CELLULARPRFL=2,0,4,0 
-    at AT%CELLULARPRFL=2,1,1,0 
-    link sysmode --ntn 
-    at AT%LOCATION=2,\"43.295\",\"5.373\",\"20\",0,0  # These are lat/lon values from config file
+    link funmode -0             # Set UE to minimum functionality (CFUN=0 equivalent)
+    at AT%CELLULARPRFL=2,0,4,0
+    at AT%CELLULARPRFL=2,1,1,0
+    link sysmode --ntn          #  Set system mode to NTN
+    at AT%LOCATION=2,\"43.295\",\"5.373\",\"20\",0,0  # Set UE location (must match enb ue_position)
     at AT+CPSMS=0
-    link funmode -1
+    link funmode -1             # Return to full functionality (CFUN=1 equivalent)
 
 If you changed the lat/lon values in the Amarisoft enb config file, adjust your `AT%LOCATION` command accordingly.
 
@@ -301,12 +332,12 @@ Now we are connected to GEO emulated satellite. Check if a DNS request works:
     RRC mode: Idle
     mosh:~$ _
 
-Check if we can send UDP data to an IP address/port;
+Check that you can send and receive UDP data to a known server. For example:
 
     sock connect -I 0 -a 95.217.154.188 -p 21185 -t dgram
     sock send -i 0 -d somebytesofdata
 
-If the IP used above is a typical UDP echo service, output similar to below should be printed:
+If you point this at a UDP echo server, you should see your payload echoed back:
 
     mosh:~$ sock send -i 0 -d somebytesofdata
     Socket data send:
@@ -330,7 +361,9 @@ On the development PC use your favorite terminal emulator and connect to your nR
 
 Upon reset of the nRF9151DK the application should print the string `Ready` to the serial terminal.
 
-Currently the serial modem needs a full CRLF at the end of commands to properly start processing. Check your terminals settings to make sure it works. Typing in the string `AT\r\n` should return the string `OK`.
+Currently, the serial modem requires a full CRLF (carriage return + line feed) sequence at the end of AT commands. Ensure your terminal is configured to send both \r and \n when you press Enter.
+
+Typing in the string `AT\r\n` should return the string `OK`.
 
 Note that this application does not echo characters back, like modem_shell did above.
 
@@ -340,12 +373,12 @@ After running the following AT commands, the device should be connected to the c
     AT%CELLULARPRFL=2,0,4,0
     AT%CELLULARPRFL=2,1,1,0
     AT%XSYSTEMMODE=0,0,0,0,1
-    AT%LOCATION=2,"63.421","10.437","160",0,0
+    AT%LOCATION=2,"43.295","5.373","20",0,0
     AT%XBANDLOCK=2,,"256"
     AT+CPSMS=0
     AT+CFUN=1
 
-Now you should be able to run the AT command `AT+CGDCONT?` and get output indicating we are connected aand have IP address from callbox:
+Now you should be able to run the AT command `AT+CGDCONT?` and get output indicating we are connected and have IP address from callbox:
 
     +CGDCONT: 0,"IP","test123","192.168.3.2",0,0
     OK
@@ -357,9 +390,19 @@ Now SLM AT commands should work, running `AT#XGETADDRINFO="www.google.com"` shou
 
 # Summary
 
-We now have a working NTN connection between the nRF9151DK and the callbox.
+You now have a working NTN connection between the nRF9151 DK and the Amarisoft Callbox.
 
-Using the modem_shell or serial_modem application and a cellular NTN operator SIM card, the same procedure should work connecting to a real satellite.
+With a suitable NTN‑capable SIM card, the same configuration steps (modem firmware, system mode, location, and APN setup) can be adapted to connect to a live NTN satellite network instead of the emulated Callbox environment.
 
-The callbox has a web GUI page that displays logs and device connection information at its IP address: `http://<callbox ip>/`.
+The Callbox also provides a web GUI at:
+http://<callbox ip>/
+where you can monitor logs, cell configuration, and connected devices.
 
+# Versioning
+
+This document was tested with:
+- Amarisoft release: 2025-09-19
+- nRF Connect SDK: 3.1.0
+- NTN modem firmware: mfw_nrf9151‑ntn_0.5.0
+
+Future releases may change configuration file names and paths; consult the latest vendor documentation if something differs.
